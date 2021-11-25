@@ -1,0 +1,41 @@
+quarkus:
+  log:
+    level: INFO
+  hibernate-orm:
+    log:
+      sql: true
+    dialect: org.hibernate.dialect.PostgreSQL10Dialect
+    jdbc:
+      timezone: UTC
+  datasource:
+    db-kind: postgresql
+    username: postgres
+    password: AXEe263eqPFqwy4z
+    jdbc: false
+    reactive:
+      url: postgresql://localhost:5432/products
+      max-size: 20
+
+# overrides in dev environment
+"%dev":
+  quarkus:
+    hibernate-orm:
+      database:
+        generation: drop-and-create
+  mp:
+    graphql:
+      showErrorMessage:
+        - io.vertx.pgclient.PgException
+
+# overrides in prod environment
+"%prod":
+  quarkus:
+    hibernate-orm:
+      sql-load-script: no-file
+      database:
+        generation: none
+
+mp:
+  graphql:
+    showErrorMessage:
+      - control.exception.AlreadyExistingException
