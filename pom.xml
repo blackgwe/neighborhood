@@ -12,10 +12,10 @@
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <quarkus-plugin.version>2.0.2.Final</quarkus-plugin.version>
+    <quarkus-plugin.version>2.4.2.Final</quarkus-plugin.version>
     <quarkus.platform.artifact-id>quarkus-universe-bom</quarkus.platform.artifact-id>
     <quarkus.platform.group-id>io.quarkus</quarkus.platform.group-id>
-    <quarkus.platform.version>2.0.2.Final</quarkus.platform.version>
+    <quarkus.platform.version>2.4.2.Final</quarkus.platform.version>
     <surefire-plugin.version>3.0.0-M5</surefire-plugin.version>
   </properties>
   <dependencyManagement>
@@ -31,47 +31,47 @@
   </dependencyManagement>
   <dependencies>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-resteasy-reactive-jsonb</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-hibernate-reactive-panache</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-config-yaml</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-smallrye-graphql</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-smallrye-context-propagation</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-arc</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-reactive-pg-client</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-resteasy-reactive</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-hibernate-validator</artifactId>
     </dependency>
     <dependency>
-      <groupId>io.quarkus</groupId>
+      <groupId>${quarkus.platform.group-id}</groupId>
       <artifactId>quarkus-junit5</artifactId>
       <scope>test</scope>
     </dependency>
@@ -84,7 +84,7 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>io.quarkus</groupId>
+        <groupId>${quarkus.platform.group-id}</groupId>
         <artifactId>quarkus-maven-plugin</artifactId>
         <version>${quarkus-plugin.version}</version>
         <extensions>true</extensions>

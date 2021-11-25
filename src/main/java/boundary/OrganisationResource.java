@@ -8,6 +8,7 @@ import entity.dto.OrganisationDTO;
 import io.smallrye.mutiny.Uni;
 import org.eclipse.microprofile.graphql.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @GraphQLApi
@@ -28,11 +29,28 @@ public class OrganisationResource {
                 .onFailure().recoverWithNull();
     }
 
-    public Uni<List<ProductDTO>> products(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
+    public Uni<List<ProductDTO>> productsFail(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
         return Catalog.getProductsByOrganisationQuery(organisation.id)
                 .onItem()
                 .transform(catalog -> ProductDTO.from(catalog.product))
-                .collect().asList();
+                .collect()
+                .asList();
+    }
+//
+//    public List<ProductDTO> productsFail1(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
+//        return CatalogEntity.getProductsByOrganisationQuery(organisation.id)
+//                .map(catalog -> ProductDTO.from(catalog.product))
+//                .collect(Collectors.toList());
+//    }
+
+    public Uni<List<ProductDTO>> productsOK(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
+        List<ProductDTO> l = new ArrayList<ProductDTO>();
+        ProductDTO p = new ProductDTO();
+        p.name = "XXXXXX";
+        p.id = -1L;
+        l.add(p);
+
+        return Uni.createFrom().item(l);
     }
 
     @Mutation

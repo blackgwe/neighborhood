@@ -76,6 +76,7 @@ public class Catalog extends PanacheEntityBase {
         return this.getClass().getSimpleName() + "<" + this.id + ">";
     }
 
+
     // todo use interface with default implementation
     public static Throwable transformThrowable(Throwable throwable, long organisationId, long productId) {
         if (throwable.getLocalizedMessage().matches("(.*)duplicate.key(.*)")) {
