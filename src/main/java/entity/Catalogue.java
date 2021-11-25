@@ -1,19 +1,18 @@
 package entity;
 
 import control.exception.AlreadyExistingException;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import io.smallrye.mutiny.Multi;
-import io.vertx.pgclient.PgException;
-import org.hibernate.HibernateException;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
+import org.postgresql.util.PSQLException;
 
 import javax.persistence.*;
+import java.util.stream.Stream;
 
 /**
- * The catalog lists products that are made available by patrons and can be used by the members of an organization.
+ * The catalogue lists products that are made available by patrons and can be used by the members of an organization.
  *
- * Triple of
+ * Technically, it's a triple of
  * <ul>
  *     <li>product</li>
  *     <li>patron of that product</li>
@@ -33,14 +32,14 @@ import javax.persistence.*;
         })
 @NamedQueries(value = {
         @NamedQuery(
-                name = "Catalog.getByOrganisationId",
-                query = "SELECT c FROM Catalog c JOIN FETCH c.product where c.organisation.id = ?1"
+                name = "Catalogue.getByOrganisationId",
+                query = "SELECT c FROM Catalogue c JOIN FETCH c.product where c.organisation.id = ?1"
         ),
         @NamedQuery(
-                name = "Catalog.getByProductId",
-                query = "SELECT c FROM Catalog c JOIN FETCH c.organisation where c.product.id = ?1")
+                name = "Catalogue.getByProductId",
+                query = "SELECT c FROM Catalogue c JOIN FETCH c.organisation where c.product.id = ?1")
 })
-public class Catalog extends PanacheEntityBase {
+public class Catalogue extends PanacheEntityBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,13 +61,13 @@ public class Catalog extends PanacheEntityBase {
     public ProductPatron patron;
 
 
-    public static Multi<Catalog> getProductsByOrganisationQuery(Long organisationId) {
-        return stream("#Catalog.getByOrganisationId", organisationId);
+    public static Stream<Catalogue> getProductsByOrganisationQuery(Long organisationId) {
+        return stream("#Catalogue.getByOrganisationId", organisationId);
     }
 
 
-    public static Multi<Catalog> getOrganisationsByProductQuery(Long productId) {
-        return stream("#Catalog.getByProductId", productId);
+    public static Stream<Catalogue> getOrganisationsByProductQuery(Long productId) {
+        return stream("#Catalogue.getByProductId", productId);
     }
 
 
@@ -76,16 +75,14 @@ public class Catalog extends PanacheEntityBase {
         return this.getClass().getSimpleName() + "<" + this.id + ">";
     }
 
-
-    // todo use interface with default implementation
     public static Throwable transformThrowable(Throwable throwable, long organisationId, long productId) {
-        if (throwable.getLocalizedMessage().matches("(.*)duplicate.key(.*)")) {
-            return new AlreadyExistingException("organisationId: " + organisationId + " and productId: " + productId);
+
+        while (throwable.getMessage().contains("could not execute statement")) {
+            throwable = throwable.getCause();
         }
 
-        Throwable cause = throwable.getCause();
-        if (cause instanceof HibernateException && cause.getCause() instanceof PgException) {
-            return cause.getCause();
+        if (throwable instanceof PSQLException && throwable.getMessage().contains("duplicate key")) {
+           return new AlreadyExistingException("[organisationId: " + organisationId + " and productId: " + productId +"]");
         }
 
         return throwable;

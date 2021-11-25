@@ -1,13 +1,12 @@
 package entity;
 
-import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import io.quarkus.panache.common.Sort;
-import io.smallrye.mutiny.Uni;
+import org.hibernate.validator.constraints.Length;
 
 import javax.persistence.*;
-import java.time.Duration;
-import java.util.List;
+import javax.validation.constraints.NotBlank;
+import java.util.stream.Stream;
 
 /**
  * A ProductPatron makes a product available to the community (members of an organisation).
@@ -21,45 +20,38 @@ public class ProductPatron extends PanacheEntityBase {
     public Long id;
 
     public String firstName;
+
+    @NotBlank
+    @Length(min = 3)
     public String lastName;
+
     public String contactData;
 
 
-    public static Uni<List<ProductPatron>> getAllPatrons() {
-        return ProductPatron.listAll(Sort.by("id"));
+    public static Stream<ProductPatron> getAllPatrons() {
+        return ProductPatron.findAll(Sort.by("id")).stream();
     }
 
 
-    public static Uni<ProductPatron> findByPatronId(Long id) {
+    public static ProductPatron findByPatronId(Long id) {
         return findById(id);
     }
 
 
-    public static Uni<ProductPatron> updatePatron(Long id, ProductPatron productPatron) {
-        return Panache
-                .withTransaction(() -> findByPatronId(id)
-                        .onItem()
-                        .ifNotNull().transform(entity -> {
-                            entity.firstName = productPatron.firstName;
-                            entity.lastName = productPatron.lastName;
-                            entity.contactData = productPatron.contactData;
-                            return entity;
-                        })
-                        .onFailure().recoverWithNull());
+    public static ProductPatron updatePatron(Long id, ProductPatron productPatron) {
+        productPatron.persistAndFlush();
+        return productPatron;
     }
 
 
-    public static Uni<ProductPatron> addPatron(ProductPatron productPatron) {
-        return Panache
-                .withTransaction(productPatron::persist)
-                .replaceWith(productPatron)
-                .ifNoItem().after(Duration.ofMillis(10000)).fail()
-                .onFailure().transform(IllegalStateException::new);
+    public static ProductPatron addPatron(ProductPatron productPatron) {
+        productPatron.persistAndFlush();
+        return productPatron;
     }
 
 
-    public static Uni<Boolean> deletePatron(Long id) {
-        return Panache.withTransaction(() -> deleteById(id));
+    public static boolean deletePatron(Long id) {
+        return ProductPatron.deleteById(id);
     }
 
 

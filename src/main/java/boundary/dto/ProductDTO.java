@@ -1,7 +1,7 @@
-package entity.dto;
+package boundary.dto;
 
 import entity.Product;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
 import org.eclipse.microprofile.graphql.Name;
 
 import java.util.List;
@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 public class ProductDTO {
 
     public String name;
+    public String ean;
     public Long id;
 
 
@@ -18,6 +19,7 @@ public class ProductDTO {
         ProductDTO p = new ProductDTO();
         p.id = product.id;
         p.name = product.name;
+        p.ean = product.ean;
         return p;
     }
 

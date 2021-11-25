@@ -1,68 +1,61 @@
 package boundary;
 
 import entity.Product;
-import entity.Catalog;
-import entity.dto.ProductDTO;
-import entity.dto.OrganisationDTO;
-import io.quarkus.hibernate.reactive.panache.Panache;
-import io.smallrye.mutiny.Uni;
+import entity.Catalogue;
+import boundary.dto.ProductDTO;
+import boundary.dto.OrganisationDTO;
 import org.eclipse.microprofile.graphql.*;
 
-import java.time.Duration;
+import javax.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 @GraphQLApi
 public class ProductResource {
 
     @Query("allProducts")
     @Description("Get all Products")
-    public Uni<List<ProductDTO>> getAllProducts() {
-        return Product.getAllProducts().onItem().transform(ProductDTO::from);
+    public List<ProductDTO> getAllProducts() {
+        return Product.getAllProducts().stream().map(ProductDTO::from).collect(Collectors.toList());
     }
 
     @Query
     @Description("Get an product")
-    public Uni<ProductDTO> getProduct(@Name("productId") long id) {
-        Uni<Product> product = Product.findById(id);
-        return product.onItem().transform(ProductDTO::from);
+    public ProductDTO getProduct(@Name("productId") long id) {
+
+        Product product = Product.findById(id);
+        return ProductDTO.from(product);
     }
 
-    public Uni<List<OrganisationDTO>> organisations(@Source(name = "ProductResponse") ProductDTO product) {
-        return Catalog
+    public List<OrganisationDTO> organisations(@Source(name = "ProductResponse") ProductDTO product) {
+
+        return Catalogue
                 .getOrganisationsByProductQuery(product.id)
-                .onItem()
-                .transform(catalog -> catalog.organisation)
-                .collect()
-                .asList()
-                .onItem()
-                .transform(OrganisationDTO::from);
+                .map(item -> OrganisationDTO.from(item.organisation))
+                .collect(Collectors.toList());
     }
 
     @Mutation
+    @Transactional
     @Description("Add organisation to product")
-    public Uni<ProductDTO> addOrganisationToProduct(@Name("organisationId") long organisationId,
-                                                    @Name("productId") long productId) {
-        return Product
-                .addOrganisationToProduct(organisationId, productId)
-                .onItem()
-                .transform(ProductDTO::from)
-                .onFailure()
-                .transform(throwable -> Catalog.transformThrowable(throwable, organisationId, productId)
-                );
+    public ProductDTO addOrganisationToProduct1(@Name("organisationId") long organisationId,
+                                                @Name("productId") long productId) throws Throwable {
+
+        Product product = Product.addOrganisationToProduct(organisationId, productId);
+        return ProductDTO.from(product);
+
+
     }
 
     @Mutation
+    @Transactional
     @Description("Add product")
-    public static Uni<ProductDTO> addProduct(@Name("name") String name) {
+    public  ProductDTO addProduct(@Name("name") String name,
+                                  @Name("ean") String ean) throws Throwable {
 
-        Product product = new Product();
-        product.name =name;
-
-        return Panache
-                .withTransaction(product::persist)
-                .onItem()
-                .transform(ProductDTO::from)
-                .ifNoItem().after(Duration.ofMillis(10000)).fail()
-                .onFailure().transform(IllegalStateException::new);
+        Product product = Product.createAndPersist(name, ean);
+        return ProductDTO.from(product);
     }
+
 }

@@ -1,26 +1,32 @@
 package boundary;
 
 import entity.ProductPatron;
-import entity.dto.ProductPatronDTO;
-import io.smallrye.mutiny.Uni;
+import boundary.dto.ProductPatronDTO;
 import org.eclipse.microprofile.graphql.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @GraphQLApi
 public class ProductPatronResponseResource {
 
     @Query("allProductPatron")
     @Description("Get all patrons")
-    public Uni<List<ProductPatronDTO>> getAllProductPatrons() {
-        return ProductPatron.getAllPatrons().onItem().transform(ProductPatronDTO::from);
+    public List<ProductPatronDTO> getAllProductPatrons() {
+
+        Stream<ProductPatronDTO> productPatronDTOStream = ProductPatron.getAllPatrons().map(ProductPatronDTO::from);
+
+        return productPatronDTOStream.collect(Collectors.toList());
     }
+
 
     @Query("getPatron")
     @Description("Gets the patron")
-    public Uni<ProductPatronDTO> getProductPatron(@Name("productPatronId") long id) {
-        Uni<ProductPatron> productPatron = ProductPatron.findById(id);
-        return productPatron.onItem().transform(ProductPatronDTO::from);
-    }
+    public ProductPatronDTO getProductPatron(@Name("productPatronId") long id) {
 
+        ProductPatron productPatron = ProductPatron.findById(id);
+
+        return ProductPatronDTO.from(productPatron);
+    }
 }

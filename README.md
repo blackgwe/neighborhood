@@ -36,7 +36,7 @@ GraphQL UI http://localhost:8080/q/graphql-ui/
 query allOrganisations {
   allOrganisations {
     title
-    releaseDate
+    createdDate
     zipCode
     id
     products {
@@ -49,7 +49,7 @@ query getOrganisation {
   organisation(organisationId: 1) {
     title
     zipCode
-    releaseDate
+    createdDate
   }
 }
 
@@ -57,7 +57,7 @@ query getOrganisationAndProductName {
   organisation(organisationId: 1) {
     title
     zipCode
-    releaseDate
+    createdDate
     products {
       name
     }
@@ -66,10 +66,10 @@ query getOrganisationAndProductName {
 
 mutation addOrganisation {
   createOrganisation(
-    organisation: {title: "The Mask", releaseDate: "1994-12-25", zipCode: "99098"}
+    organisation: {title: "The Mask", createdDate: "1994-12-25", zipCode: "99098"}
   ) {
     title
-    releaseDate
+    createdDate
     zipCode
   }
 }
@@ -97,7 +97,7 @@ query allProducts {
 mutation addProductToOrganisation {
   addProductToOrganisation(organisationId: 1, productId: 4) {
     title
-    releaseDate
+    createdDate
     zipCode
     products {
       name

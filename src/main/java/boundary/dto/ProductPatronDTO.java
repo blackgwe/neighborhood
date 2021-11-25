@@ -1,4 +1,4 @@
-package entity.dto;
+package boundary.dto;
 
 import entity.ProductPatron;
 import org.eclipse.microprofile.graphql.Name;

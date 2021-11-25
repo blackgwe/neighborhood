@@ -1,81 +1,66 @@
 package boundary;
 
-import control.exception.AlreadyExistingException;
-import entity.Catalog;
+import entity.Catalogue;
 import entity.Organisation;
-import entity.dto.ProductDTO;
-import entity.dto.OrganisationDTO;
-import io.smallrye.mutiny.Uni;
+import boundary.dto.ProductDTO;
+import boundary.dto.OrganisationDTO;
 import org.eclipse.microprofile.graphql.*;
 
-import java.util.ArrayList;
+import javax.transaction.Transactional;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+@SuppressWarnings("unused")
 @GraphQLApi
 public class OrganisationResource {
 
     @Query("allOrganisations")
     @Description("Get all organisations")
-    public Uni<List<OrganisationDTO>> getAllOrganisations() {
-        return Organisation.getAllOrganisations()
-                .onItem().transform(OrganisationDTO::from);
+    public List<OrganisationDTO> getAllOrganisations() {
+        return OrganisationDTO.from(Organisation.getAllOrganisations());
     }
 
-    @Query
     @Description("Get an organisation")
-    public Uni<OrganisationDTO> getOrganisation(@Name("organisationId") long id) {
-        return Organisation.findByOrganisationId(id)
-                .onItem().transform(OrganisationDTO::from)
-                .onFailure().recoverWithNull();
+    public OrganisationDTO getOrganisation(@Name("organisationId") long id) {
+        return OrganisationDTO.from(Organisation.findByOrganisationId(id));
     }
 
-    public Uni<List<ProductDTO>> productsFail(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
-        return Catalog.getProductsByOrganisationQuery(organisation.id)
-                .onItem()
-                .transform(catalog -> ProductDTO.from(catalog.product))
-                .collect()
-                .asList();
-    }
-//
-//    public List<ProductDTO> productsFail1(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
-//        return CatalogEntity.getProductsByOrganisationQuery(organisation.id)
-//                .map(catalog -> ProductDTO.from(catalog.product))
-//                .collect(Collectors.toList());
-//    }
+    public List<ProductDTO> products(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
 
-    public Uni<List<ProductDTO>> productsOK(@Source(name = "OrganisationResponse") OrganisationDTO organisation) {
-        List<ProductDTO> l = new ArrayList<ProductDTO>();
-        ProductDTO p = new ProductDTO();
-        p.name = "XXXXXX";
-        p.id = -1L;
-        l.add(p);
+        Stream<ProductDTO> productDTOStream = Catalogue
+                .getProductsByOrganisationQuery(organisation.id)
+                .map(catalogItem -> ProductDTO.from(catalogItem.product));
 
-        return Uni.createFrom().item(l);
+        return productDTOStream.collect(Collectors.toList());
     }
 
     @Mutation
+    @Transactional
     @Description("Create an organisation")
-    public Uni<OrganisationDTO> createOrganisation(Organisation organisation) {
-        return Organisation.addOrganisation(organisation).onItem().transform(OrganisationDTO::from);
+    public OrganisationDTO createOrganisation(Organisation organisation) {
+        return OrganisationDTO.from(Organisation.addOrganisation(organisation));
     }
 
     @Mutation
+    @Transactional
     @Description("Update an organisation")
-    public Uni<OrganisationDTO> updateOrganisation(@Name("organisationId") long id, Organisation organisation) {
-        return Organisation.updateOrganisation(id, organisation).onItem().transform(OrganisationDTO::from);
+    public OrganisationDTO updateOrganisation(@Name("organisationId") long id, Organisation organisation) {
+        return OrganisationDTO.from(organisation.update());
     }
 
     @Mutation
     @Description("Delete an organisation")
-    public Uni<Boolean> deleteOrganisation(@Name("organisationId") long id) {
+    public Boolean deleteOrganisation(@Name("organisationId") long id) {
         return Organisation.deleteOrganisation(id);
     }
 
     @Mutation
+    @Transactional
     @Description("Add product to an organisation")
-    public Uni<OrganisationDTO> addProductToOrganisation(@Name("organisationId") long organisationId, @Name("productId") long productId) {
-        return Organisation.addProductToOrganisation(organisationId, productId).onItem().transform(OrganisationDTO::from).onFailure().
-                transform(throwable -> new AlreadyExistingException("organisationId: " + organisationId + " and productId: " + productId));
-    }
+    public OrganisationDTO addProductToOrganisation(@Name("organisationId") long organisationId,
+                                                    @Name("productId") long productId) throws Throwable {
 
+        return OrganisationDTO.from(Organisation.addProductToOrganisation(organisationId, productId));
+    }
 }

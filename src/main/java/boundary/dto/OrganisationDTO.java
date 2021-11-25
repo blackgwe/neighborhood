@@ -1,4 +1,4 @@
-package entity.dto;
+package boundary.dto;
 
 import entity.Organisation;
 import org.eclipse.microprofile.graphql.Name;
@@ -14,8 +14,11 @@ public class OrganisationDTO {
     public Long id;
     public String title;
     public String zipCode;
+    public Float latitude;
+    public Float longitude;
+
     @JsonbDateFormat("yyyy-MM-dd")
-    public LocalDate releaseDate;
+    public LocalDate createdDate;
 
 
     public static OrganisationDTO from(Organisation organisation) {
@@ -23,7 +26,9 @@ public class OrganisationDTO {
         dto.id = organisation.id;
         dto.title = organisation.title;
         dto.zipCode = organisation.zipCode;
-        dto.releaseDate = organisation.releaseDate;
+        dto.latitude = organisation.latitude;
+        dto.longitude = organisation.longitude;
+        dto.createdDate = organisation.createdDate;
         return dto;
     }
 

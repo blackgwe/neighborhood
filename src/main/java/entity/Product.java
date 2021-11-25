@@ -1,12 +1,14 @@
 package entity;
 
-import io.quarkus.hibernate.reactive.panache.Panache;
-import io.quarkus.hibernate.reactive.panache.PanacheEntityBase;
-import io.smallrye.mutiny.Uni;
-import io.smallrye.mutiny.tuples.Tuple3;
+import io.quarkus.hibernate.orm.panache.PanacheEntityBase;
+import org.hibernate.validator.constraints.EAN;
 import org.hibernate.validator.constraints.Length;
+import org.hibernate.validator.constraints.Range;
 
 import javax.persistence.*;
+import javax.validation.ConstraintViolationException;
+import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Entity
@@ -17,60 +19,81 @@ public class Product extends PanacheEntityBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     public Long id;
 
-    @Length(min = 5)
+    @Length(min = 3)
     public String name;
 
+    @EAN
+    public String ean;
 
-    public static Uni<List<Product>> getAllProducts() {
+    public Byte eanVariant;
+
+    @Length(min = 1, max = 63)
+    public String payloadInterface;
+
+    @NotNull
+    @Range(min=0L, max=65535)
+    public Integer payloadVersion;
+
+    @NotEmpty
+    public String payloadJson;
+
+
+    public static List<Product> getAllProducts() {
         return Product.listAll();
-//  does not work, not necessary? why?
-//                .ifNoItem()
-//                .after(Duration.ofMillis(1000))
-//                .fail()
-//                .onFailure()
-//                .recoverWithUni(Uni.createFrom().<List<PanacheEntityBase>>item(Collections.EMPTY_LIST));
     }
 
 
-    public static Uni<Product> addOrganisationToProduct(Long OrganisationId, Long ProductId) {
+    public static Product addOrganisationToProduct(Long organisationId, Long productId) throws Throwable {
 
-        Uni<Product> organisation = findById(ProductId);
-        Uni<Organisation> product = Organisation.findByOrganisationId(OrganisationId);
-        Uni<ProductPatron> patron = ProductPatron.findById(1L);
-
-        Uni<Tuple3<Product, Organisation, ProductPatron>> organisationProductPatronUni = Uni
-                .combine()
-                .all()
-                .unis(organisation, product, patron)
-                .asTuple();
-
-        return Panache
-                .withTransaction(() -> organisationProductPatronUni
-                        .onItem().ifNotNull()
-                        .transform(Product::from)
-                        .onItem().call(catalog -> catalog.persist())
-                        .onItem().transform(catalog -> catalog.product));
-
-    }
-
-    private static Catalog from(Tuple3<Product, Organisation, ProductPatron> tuple) {
-
-        Product product = tuple.getItem1();
-        Organisation organisation = tuple.getItem2();
-        ProductPatron patron = tuple.getItem3();
-
-        Catalog result = null;
+        Product product = findById(productId);
+        Organisation organisation = Organisation.findById(organisationId);
+        ProductPatron patron = ProductPatron.findById(1L);
 
         if (product != null && organisation != null && patron != null) {
-            result = new Catalog();
-            result.product = product;
-            result.organisation = organisation;
-            result.patron = patron;
+            Catalogue catalogue = new Catalogue();
+            catalogue.product = product;
+            catalogue.organisation = organisation;
+            catalogue.patron = patron;
+
+            try {
+                catalogue.persistAndFlush();
+            } catch (Throwable throwable) {
+                throw Catalogue.transformThrowable(throwable, organisationId, productId);
+            }
         }
 
-        return result;
+        return product;
     }
 
+    public static Product createAndPersist(String name,
+                                           String ean) throws Throwable {
+
+        Product product = new Product();
+        product.name = name;
+        product.ean = ean;
+
+        try {
+            product.persistAndFlush();
+        } catch (Throwable throwable) {
+            throw Product.transformThrowable(throwable);
+        }
+
+        return product;
+    }
+
+
+    private static Throwable transformThrowable(Throwable throwable) {
+
+        while (throwable.getMessage().contains("could not execute statement")) {
+            throwable = throwable.getCause();
+        }
+
+        if (throwable instanceof ConstraintViolationException && throwable.getMessage().contains("Validation failed")) {
+            return new control.exception.ConstraintViolationException(throwable.getMessage());
+        }
+
+        return throwable;
+    }
 
     public String toString() {
         return this.getClass().getSimpleName() + "<" + this.id + ">";
